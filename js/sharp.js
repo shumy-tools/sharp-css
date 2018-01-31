@@ -1,80 +1,59 @@
 (function() {
-  Array.prototype.diff = function(a) {
+  //helper functions---------------------------------------------------------------------------------------//
+  Array.prototype.SharpDiff = function(a) {
     return {
       "rm": this.filter(i => a.indexOf(i) < 0),
       "add": a.filter(i => this.indexOf(i) < 0)
     }
   }
 
-  let classConverter = _ => {
-    let sa = _.split(':')
+  Array.prototype.SharpParser = function() {
+    return this.map(classParser)
+  }
+
+  String.prototype.SharpFilter = function() {
+    return this.split(" ").filter(_ => _.indexOf(':') != -1)
+  }
+
+  let classParser = (clazz) => {
+    let sa = clazz.split(':')
     return {
       state: sa[0],
       action: sa[1]
     }
   }
 
-  let initElement = el => {
-    el.className.split(" ")
-      .map(classConverter)
-      .forEach(sa => sharp.actions.addAction(el, sa))
-      listenElement(el)
+  let initElement = (target) => {
+    if (target instanceof HTMLElement)
+      target.className.SharpFilter()
+        .SharpParser()
+        .forEach(sa => sharp.actions.addAction(target, sa))
   }
 
-  let listenElement = el => {
-    if (!el.sharp) el.sharp = {}
-
-    if (!el.sharp.observed) {
-      console.log('OBSERVE: ', el)
-      el.sharp.observed = true
-      classObserver.observe(el, {
-        attributes: true, 
-        attributeFilter: ['class'],
-        attributeOldValue: true
-      })
-    }
-  }
-
-  //---------------------------------------------------------------------------------------//
-  let bodyObserver = new MutationObserver(mutations => {
+  //body observer---------------------------------------------------------------------------------------//
+  let observer = new MutationObserver(mutations => {
     mutations.forEach(mut => {
       if (mut.type == "childList") {
-        mut.addedNodes
-          .forEach(node => {
-            if (node instanceof HTMLElement) {
-              //ON-ELEMENT CREATE...
-              initElement(node)
-            }
-          })
-        
-        //mut.removedNodes.forEach(node => console.log(node))
-      }
-    })
-  })
+        //initialize sharp on element creation...
+        mut.addedNodes.forEach(node => initElement(node))
+      } else {
+        // calculate the difference between class values...
+        let diff = mut.oldValue.SharpFilter().SharpDiff(mut.target.className.SharpFilter())
 
-  let classObserver = new MutationObserver(mutations => {
-    mutations.forEach(mut => {
-      if (mut.attributeName == "class") {
-        let oldClasses = mut.oldValue.split(" ")
-        let newClasses = mut.target.className.split(" ")
-        let diff = oldClasses.diff(newClasses)
-
-        //ON-CLASS ADD...
+        //add action on class add...
         diff['add']
-          .filter(_ => _.indexOf(':') != -1)
-          .map(classConverter)
+          .SharpParser()
           .forEach(sa => sharp.actions.addAction(mut.target, sa))
 
-        //ON-CLASS REMOVE...
+        //remove action on class remove...
         diff['rm']
-          .filter(_ => _.indexOf(':') > 0)
-          .map(classConverter)
+          .SharpParser()
           .forEach(sa => sharp.actions.removeAction(mut.target, sa))
       }
     })
   })
 
-  //---------------------------------------------------------------------------------------//
+  //sharp classes---------------------------------------------------------------------------------------//
   class SharpActions {
     constructor() {
       this.actions = {}
@@ -143,11 +122,6 @@
       return this
     }
 
-    listen() {
-      this.els.forEach(el => listenElement(el))
-      return this
-    }
-
     append(html) {
       this.els.forEach(el => {
         //FIX: Modifying innerHTML will destroy and rebuild all descendant elements of the container.
@@ -167,6 +141,7 @@
     }
   }
 
+  //sharp config and load---------------------------------------------------------------------------------------//
   let readyFuncs = []
 
   sharp = function(sel) {
@@ -183,15 +158,18 @@
 
   function load() {
     console.log("---sharp-css---")
-    bodyObserver.observe(document.body, {
+    observer.observe(document.body, {
       childList: true,
+      attributes: true, 
+      attributeFilter: ['class'],
+      attributeOldValue: true,
       subtree: true
     })
     
     console.log("Install Actions: ")
     readyFuncs.forEach(func => func())
 
-    console.log("---sharp-listen---")
+    console.log("---sharp-init---")
     sharp('[class*=":"]').init()
   }
 
