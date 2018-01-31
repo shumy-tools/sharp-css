@@ -74,29 +74,42 @@
     }
 
     addAction(el, sa) {
-      let event = sharp.config.states[sa.state]
+      let events = sharp.config.stateEvents[sa.state]
       let actFunc = this.actions[sa.action]
-      if (event && actFunc) {
+      if (events && actFunc) {
         if (!el.sharp) el.sharp = {}
 
         el.sharp[sa.action] = (evt) => {
+          let reaction = sharp.config.eventReactions[evt.type]
+          if (reaction) {
+            console.log(`REACT -> ${sa.state}:${evt.type}`)
+            //TODO: apply reactions...
+          }
+
           console.log(`ACT -> ${sa.state}:${sa.action}`)
           let sharpEl = new SharpElements(evt.target)
-          actFunc(sharpEl)
+          actFunc(sharpEl, sa.state, evt)
         }
 
         console.log(`ADD-ACTION: (id=${el.id}, state=${sa.state}, action=${sa.action})`)
-        el.addEventListener(event, el.sharp[sa.action])
+        if (events instanceof Array)
+          events.forEach(event => el.addEventListener(event, el.sharp[sa.action]))
+        else
+          el.addEventListener(events, el.sharp[sa.action])
       }
 
       return this
     }
 
     removeAction(el, sa) {
-      let event = sharp.config.states[sa.state]
+      let events = sharp.config.stateEvents[sa.state]
       let actFunc = this.actions[sa.action]
-      if (event && actFunc) {
-        el.removeEventListener(event, el.sharp[sa.action])
+      if (events && actFunc) {
+        if (events instanceof Array)
+          events.forEach(event => el.removeEventListener(event, el.sharp[sa.action]))
+        else
+          el.removeEventListener(events, el.sharp[sa.action])
+        
         delete el.sharp[sa.action]
         console.log(`RM-ACTION: (id=${el.id}, state=${sa.state}, action=${sa.action})`)
       }
@@ -158,7 +171,8 @@
   }
 
   sharp.config = {
-    states: { click: 'click', hover: 'mouseover', focus: 'focus' }
+    stateEvents: { click: 'click', hover: ['mouseenter', 'mouseleave'], focus: 'focus' }, //filled
+    eventReactions: { mouseenter: 'add-class', mouseleave: 'remove-class' }
   }
 
   sharp.actions = new SharpActions()
