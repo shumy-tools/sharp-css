@@ -31,6 +31,14 @@
   }
 
   //body observer---------------------------------------------------------------------------------------//
+  let observerConfig = {
+    childList: true,
+    attributes: true, 
+    attributeFilter: ['class'],
+    attributeOldValue: true,
+    subtree: true
+  }
+
   let observer = new MutationObserver(mutations => {
     mutations.forEach(mut => {
       if (mut.type == "childList") {
@@ -62,12 +70,11 @@
     install(action, actFunc) {
       console.log(`  Action: ${action}`)
       this.actions[action] = actFunc
-
       return this
     }
 
     addAction(el, sa) {
-      let event = sharp.states[sa.state]
+      let event = sharp.config.states[sa.state]
       let actFunc = this.actions[sa.action]
       if (event && actFunc) {
         if (!el.sharp) el.sharp = {}
@@ -86,7 +93,7 @@
     }
 
     removeAction(el, sa) {
-      let event = sharp.states[sa.state]
+      let event = sharp.config.states[sa.state]
       let actFunc = this.actions[sa.action]
       if (event && actFunc) {
         el.removeEventListener(event, el.sharp[sa.action])
@@ -98,7 +105,7 @@
     }
   }
 
-  let parser = new DOMParser()
+  //let parser = new DOMParser()
 
   class SharpElements {
     constructor(els) {
@@ -108,13 +115,14 @@
         this.els = [els]
     }
 
-    state() {
+    // list all elements available actions
+    actions() {
       if (this.els.length === 1)
-        return this.els[0].sharp
+        return Object.keys(this.els[0].sharp)
       
-      let _state = []
-      this.els.forEach(el => _state.push(el.sharp))
-      return _state
+      let _actions = []
+      this.els.forEach(el => _actions.push.apply(_actions, Object.keys(el.sharp)))
+      return _actions
     }
 
     init() {
@@ -149,7 +157,10 @@
     return new SharpElements(res)
   }
 
-  sharp.states = { click: 'click', hover: 'mouseover', focus: 'focus' }
+  sharp.config = {
+    states: { click: 'click', hover: 'mouseover', focus: 'focus' }
+  }
+
   sharp.actions = new SharpActions()
 
   sharp.ready = function(func) {
@@ -158,13 +169,7 @@
 
   function load() {
     console.log("---sharp-css---")
-    observer.observe(document.body, {
-      childList: true,
-      attributes: true, 
-      attributeFilter: ['class'],
-      attributeOldValue: true,
-      subtree: true
-    })
+    observer.observe(document.documentElement, observerConfig)
     
     console.log("Install Actions: ")
     readyFuncs.forEach(func => func())
