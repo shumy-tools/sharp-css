@@ -67,6 +67,28 @@
       this.actions = {}
     }
 
+    //do not use this directly...
+    _arMethod(el, sa) {
+      return (evt) => {
+        let sharpEl = new SharpElements(evt.target)
+
+        //reaction...
+        let reaction = sharp.config.eventReactions[evt.type]
+        let reactFunc = sharp.config.reactions[reaction]
+        if (reaction && reactFunc) {
+          console.log(`REACT -> ${sa.state}:${reaction}`)
+          reactFunc(sharpEl, sa.state, sa.action, evt)
+        }
+
+        //action...
+        let actFunc = this.actions[sa.action]
+        if (actFunc) {
+          console.log(`ACT -> ${sa.state}:${sa.action}`)
+          actFunc(sharpEl, sa.state, evt)
+        }
+      }
+    }
+
     install(action, actFunc) {
       console.log(`  Action: ${action}`)
       this.actions[action] = actFunc
@@ -75,21 +97,10 @@
 
     addAction(el, sa) {
       let events = sharp.config.stateEvents[sa.state]
-      let actFunc = this.actions[sa.action]
-      if (events && actFunc) {
+      if (events) {
+        
         if (!el.sharp) el.sharp = {}
-
-        el.sharp[sa.action] = (evt) => {
-          let reaction = sharp.config.eventReactions[evt.type]
-          if (reaction) {
-            console.log(`REACT -> ${sa.state}:${evt.type}`)
-            //TODO: apply reactions...
-          }
-
-          console.log(`ACT -> ${sa.state}:${sa.action}`)
-          let sharpEl = new SharpElements(evt.target)
-          actFunc(sharpEl, sa.state, evt)
-        }
+        el.sharp[sa.action] = this._arMethod(el, sa)
 
         console.log(`ADD-ACTION: (id=${el.id}, state=${sa.state}, action=${sa.action})`)
         if (events instanceof Array)
@@ -172,7 +183,11 @@
 
   sharp.config = {
     stateEvents: { click: 'click', hover: ['mouseenter', 'mouseleave'], focus: 'focus' }, //filled
-    eventReactions: { mouseenter: 'add-class', mouseleave: 'remove-class' }
+    eventReactions: { mouseenter: 'add-class', mouseleave: 'remove-class' },
+    reactions: {
+      "add-class": (el, state, action) => el.addClass(state + '#' + action) ,
+      "remove-class": (el, state, action) => el.removeClass(state + '#' + action)
+    }
   }
 
   sharp.actions = new SharpActions()
