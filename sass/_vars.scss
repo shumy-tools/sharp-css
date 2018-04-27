@@ -1,0 +1,68 @@
+// tags --------------------------------------------------
+$box: 'box';
+$border: 'brd';
+$padding: 'pad';
+$margin: 'mrg';
+
+// screens -----------------------------------------------
+$screens: (
+  'all': 'default',
+  'sm': '576px',
+  'md': '768px',
+  'lg': '992px',
+  'xl': '1200px'
+);
+
+// relatives ---------------------------------------------
+$relatives-prefix: '';
+$relatives: (
+  'top': 'top',
+  'bot': 'bottom',
+  'lef': 'left',
+  'rig': 'right'
+);
+
+$rel-combos: (
+  'vert': ('top', 'bottom'),
+  'horz': ('left', 'right'),
+  'tl': ('top', 'left'),
+  'tr': ('top', 'right'),
+  'bl': ('bottom', 'left'),
+  'br': ('bottom', 'right')
+);
+
+// thickness ---------------------------------------------
+$thickness-prefix: '';
+$thickness: (
+  '0': '0px',
+  '1': '1px',
+  '2': '2px',
+  '3': '3px',
+  '4': '4px',
+  '5': '5px'
+);
+
+// colors ------------------------------------------------
+$colors-prefix: '';
+$colors: (
+  'transparent': transparent,
+  'black': #000000,
+  'white': #ffffff,
+  'primary': #007bff,
+  'secondary': #6c757d,
+  'light': #f8f9fa,
+  'dark': #343a40,
+  'success': #28a745,
+  'info': #17a2b8,
+  'warning': #ffc107,
+  'danger': #dc3545
+);
+
+// opacity -----------------------------------------------
+$opacity: (
+  '100': 1,
+  '75': .75,
+  '50':	.5,
+  '25':	.25,
+  '0': 0
+);

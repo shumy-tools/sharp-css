@@ -1,0 +1,88 @@
+// box, padding, border, corner, margin
+// top, bottom, left, right, horizontal, vertical
+// color, thickness, 
+
+@mixin thickness($tag, $prefix, $postfix, $screen) {
+  $scr: '.';
+  @if $screen != 'all' {
+    $scr: $scr + $screen + '\\$';
+  }
+
+  @if $postfix != '' {
+    $postfix: '-' + $postfix;
+  }
+
+  @each $thick, $thick-value in $thickness {
+    #{$scr}#{$tag}-#{$thickness-prefix}#{$thick} { #{$prefix}#{$postfix}: #{$thick-value}; }
+  
+    @each $rel, $rel-value in $relatives {
+      #{$scr}#{$tag}-#{$relatives-prefix}#{$rel}-#{$thickness-prefix}#{$thick} { #{$prefix}-#{$rel-value}#{$postfix}: #{$thick-value}; }
+    }
+  
+    @each $rel, $rel-list in $rel-combos {
+      #{$scr}#{$tag}-#{$relatives-prefix}#{$rel}-#{$thickness-prefix}#{$thick} {
+        @each $rel-value in $rel-list {
+          #{$prefix}-#{$rel-value}#{$postfix}: #{$thick-value};
+        }
+      }
+    }
+  }
+}
+
+// box ------------------------------------------------
+// <box>-<color>
+@mixin box-color($screen) {
+  $scr: '.';
+  @if $screen != 'all' {
+    $scr: $scr + $screen + '\\$';
+  }
+
+  @each $color, $color-value in $colors {
+    #{$scr}#{$box}-#{$colors-prefix}#{$color} { background-color: #{$color-value}; }
+  }
+}
+
+// border ------------------------------------------------
+// <brd>-[relative-]<color>
+@mixin border-color($screen) {
+  $scr: '.';
+  @if $screen != 'all' {
+    $scr: $scr + $screen + '\\$';
+  }
+
+  @each $color, $color-value in $colors {
+    #{$scr}#{$border}-#{$colors-prefix}#{$color} { border-color: #{$color-value}; }
+  
+    @each $rel, $rel-value in $relatives {
+      #{$scr}#{$border}-#{$relatives-prefix}#{$rel}-#{$colors-prefix}#{$color} { border-#{$rel-value}-color: #{$color-value}; }
+    }
+  
+    @each $rel, $rel-list in $rel-combos {
+      #{$scr}#{$border}-#{$relatives-prefix}#{$rel}-#{$colors-prefix}#{$color} {
+        @each $rel-value in $rel-list {
+          border-#{$rel-value}-color: #{$color-value};
+        }
+      }
+    }
+  }
+}
+
+// compile-all --------------------------------------------------------------------------------------------------------------------
+@mixin all($screen) {
+  @include box-color($screen);
+  @include border-color($screen);
+
+  @include thickness($border, 'border', 'width', $screen);
+  @include thickness($padding, 'padding', '', $screen);
+  @include thickness($margin, 'margin', '', $screen);
+}
+
+@each $screen, $size in $screens {
+  @if $screen == 'all' {
+    @include all($screen);
+  } @else {
+    @media (min-width: #{$size}) {
+      @include all($screen);
+    }
+  }
+}
